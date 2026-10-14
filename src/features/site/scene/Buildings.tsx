@@ -1,3 +1,4 @@
+import { windowMaterial } from '../../../shared/nightMaterials';
 import { Box } from '../../../shared/primitives';
 import { rectCenter, rectSize, ZONES, type Rect } from '../layout';
 
@@ -13,10 +14,10 @@ function WindowBands({ rect, floors, h }: { rect: Rect; floors: number; h: numbe
         const y = floorH * f + floorH * 0.55;
         return (
           <group key={f}>
-            <Box position={[x, y, rect.maxZ + 0.02]} size={[w - 1, floorH * 0.45, 0.06]} color={GLASS} emissive="#f3d9a0" emissiveIntensity={0.55} shadow={false} roughness={0.1} />
-            <Box position={[x, y, rect.minZ - 0.02]} size={[w - 1, floorH * 0.45, 0.06]} color={GLASS} emissive="#f3d9a0" emissiveIntensity={0.55} shadow={false} roughness={0.1} />
-            <Box position={[rect.maxX + 0.02, y, z]} size={[0.06, floorH * 0.45, d - 1]} color={GLASS} emissive="#f3d9a0" emissiveIntensity={0.55} shadow={false} roughness={0.1} />
-            <Box position={[rect.minX - 0.02, y, z]} size={[0.06, floorH * 0.45, d - 1]} color={GLASS} emissive="#f3d9a0" emissiveIntensity={0.55} shadow={false} roughness={0.1} />
+            <Box position={[x, y, rect.maxZ + 0.02]} size={[w - 1, floorH * 0.45, 0.06]} color={GLASS} material={windowMaterial} shadow={false} />
+            <Box position={[x, y, rect.minZ - 0.02]} size={[w - 1, floorH * 0.45, 0.06]} color={GLASS} material={windowMaterial} shadow={false} />
+            <Box position={[rect.maxX + 0.02, y, z]} size={[0.06, floorH * 0.45, d - 1]} color={GLASS} material={windowMaterial} shadow={false} />
+            <Box position={[rect.minX - 0.02, y, z]} size={[0.06, floorH * 0.45, d - 1]} color={GLASS} material={windowMaterial} shadow={false} />
           </group>
         );
       })}
@@ -35,9 +36,9 @@ function Office() {
       <Box position={[x, h + 0.25, z]} size={[w + 0.6, 0.5, d + 0.6]} color="#e9ecfb" />
       <WindowBands rect={r} floors={3} h={h} />
       {/* Entrance canopy facing the walkway */}
-      <Box position={[r.maxX + 1.5, 3, 2]} size={[3, 0.3, 6]} color="#4c6ef5" />
-      <Box position={[r.maxX + 2.8, 1.5, -0.6]} size={[0.2, 3, 0.2]} color="#334155" />
-      <Box position={[r.maxX + 2.8, 1.5, 4.6]} size={[0.2, 3, 0.2]} color="#334155" />
+      <Box position={[r.maxX + 1.5, 3, -3]} size={[3, 0.3, 6]} color="#4c6ef5" />
+      <Box position={[r.maxX + 2.8, 1.5, -5.6]} size={[0.2, 3, 0.2]} color="#334155" />
+      <Box position={[r.maxX + 2.8, 1.5, -0.4]} size={[0.2, 3, 0.2]} color="#334155" />
       {/* Rooftop units */}
       <Box position={[x - 5, h + 1.2, z - 4]} size={[4, 1.6, 3]} color="#8d97c7" />
       <Box position={[x + 4, h + 1, z + 3]} size={[3, 1.2, 3]} color="#8d97c7" />
@@ -77,7 +78,7 @@ function Utility() {
       <Box position={[r.minX + 7, 3, r.minZ + 7]} size={[12, 6, 10]} color="#4a5590" />
       <Box position={[r.minX + 7, 6.2, r.minZ + 7]} size={[12.4, 0.4, 10.4]} color="#e9ecfb" />
       {[0, 1].map((i) => (
-        <group key={i} position={[r.minX + 20 + i * 7, 0, r.minZ + 8]}>
+        <group key={i} position={[r.minX + 16 + i * 5.5, 0, r.minZ + 8]}>
           <mesh position={[0, 4, 0]} castShadow receiveShadow>
             <cylinderGeometry args={[2.6, 2.6, 8, 24]} />
             <meshStandardMaterial color="#e2e8f0" metalness={0.5} roughness={0.35} />
@@ -89,15 +90,37 @@ function Utility() {
         </group>
       ))}
       {/* Transformer yard */}
-      <Box position={[r.minX + 8, 1.2, r.maxZ - 5]} size={[3, 2.4, 2]} color="#64748b" metalness={0.4} />
-      <Box position={[r.minX + 13, 1.2, r.maxZ - 5]} size={[3, 2.4, 2]} color="#64748b" metalness={0.4} />
+      <Box position={[r.minX + 3, 1.2, r.maxZ - 5]} size={[3, 2.4, 2]} color="#64748b" metalness={0.4} />
+      <Box position={[r.minX + 7, 1.2, r.maxZ - 5]} size={[3, 2.4, 2]} color="#64748b" metalness={0.4} />
       {/* Solar panels */}
       {Array.from({ length: 4 }, (_, i) => (
-        <mesh key={i} position={[r.maxX - 8, 1.2, r.maxZ - 4 - i * 3]} rotation-x={-0.5} castShadow>
-          <boxGeometry args={[10, 0.08, 2]} />
+        <mesh key={i} position={[r.maxX - 7, 1.2, r.maxZ - 4 - i * 3]} rotation-x={-0.5} castShadow>
+          <boxGeometry args={[8, 0.08, 2]} />
           <meshStandardMaterial color="#1e3a8a" metalness={0.7} roughness={0.2} />
         </mesh>
       ))}
+    </group>
+  );
+}
+
+/** Maintenance workshop: mirror of the office, with roll-up doors facing the walkway. */
+function Maintenance() {
+  const r = ZONES.maintenance;
+  const { x, z } = rectCenter(r);
+  const { w, d } = rectSize(r);
+  const h = 7;
+  return (
+    <group>
+      <Box position={[x, h / 2, z]} size={[w, h, d]} color="#34407a" />
+      <Box position={[x, h + 0.25, z]} size={[w + 0.6, 0.5, d + 0.6]} color="#e9ecfb" />
+      <WindowBands rect={r} floors={1} h={h} />
+      {[-7, 1].map((dz) => (
+        <group key={dz} position={[r.minX - 0.05, 0, z + dz]}>
+          <Box position={[0, 2.2, 0]} size={[0.1, 4.4, 4.5]} color="#8d97c7" shadow={false} />
+          <Box position={[-0.05, 4.6, 0]} size={[0.2, 0.3, 5]} color="#1c2350" shadow={false} />
+        </group>
+      ))}
+      <Box position={[x + 5, h + 1.1, z + 4]} size={[3.5, 1.4, 3]} color="#8d97c7" />
     </group>
   );
 }
@@ -106,6 +129,7 @@ export function Buildings() {
   return (
     <group>
       <Office />
+      <Maintenance />
       <Canteen />
       <Utility />
     </group>

@@ -31,13 +31,18 @@ export function DocksPanel() {
                     </div>
                     <div>
                       <dt>พนักงาน</dt>
-                      <dd>{d.worker}</dd>
+                      <dd>{d.worker ?? '—'}</dd>
+                    </div>
+                    <div>
+                      <dt>กำลังทำ</dt>
+                      <dd>{d.activity}</dd>
                     </div>
                   </dl>
                   <div className="meter-row">
                     <span className="muted">ช่องพักสินค้า</span>
                     <span>
                       {d.staged}/{d.slots}
+                      {kind === 'receiving' && d.unchecked > 0 ? ` · รอ QC ${d.unchecked}` : ''}
                     </span>
                   </div>
                   <Meter value={d.staged} max={d.slots} color={kind === 'receiving' ? '#38bdf8' : '#4ade80'} />
@@ -47,9 +52,9 @@ export function DocksPanel() {
         </Section>
       ))}
       <p className="hint">
-        ขาเข้า: พนักงานขนพาเลทจากรถ → ช่องพัก → AGV นำเข้าชั้นวาง
+        ขาเข้า: พนักงานลากพาเลทจากรถด้วยแฮนด์ลิฟต์ → ช่องพัก → เจ้าหน้าที่ QC สแกนตรวจ → AGV นำเข้าชั้นวาง
         <br />
-        ขาออก: AGV หยิบจากชั้นวาง → ช่องพัก → พนักงานโหลดขึ้นรถ
+        ขาออก: AGV หยิบจากชั้นวาง → ช่องพัก → พนักงานโหลดขึ้นรถ → คนขับเซ็นรับ → ตรวจออกที่ประตู
       </p>
     </>
   );

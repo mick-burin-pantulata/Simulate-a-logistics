@@ -1,5 +1,9 @@
-import { Canvas } from '@react-three/fiber';
+﻿import { Canvas } from '@react-three/fiber';
 import { Agvs } from '../features/agv/scene/Agv';
+import { CityBuildings } from '../features/city/scene/CityBuildings';
+import { RoadNetwork } from '../features/roads/scene/RoadNetwork';
+import { CityCars } from '../features/traffic/scene/CityCars';
+import { Conveyor } from '../features/conveyor/scene/Conveyor';
 import { DockArea } from '../features/docks/scene/DockArea';
 import { ProductionHall } from '../features/production/scene/ProductionHall';
 import { Buildings } from '../features/site/scene/Buildings';
@@ -7,21 +11,21 @@ import { Gate } from '../features/site/scene/Gate';
 import { CarPark, Fence, LampPosts, Trees } from '../features/site/scene/Landscape';
 import { Markings } from '../features/site/scene/Markings';
 import { SiteGround } from '../features/site/scene/SiteGround';
+import { ZONES } from '../features/site/layout';
 import { YardProps } from '../features/site/scene/YardProps';
 import { ZoneLabels } from '../features/site/scene/ZoneLabels';
+import { DayNight } from '../features/time/scene/DayNight';
 import { Trucks } from '../features/trucks/scene/Truck';
+import { TruckPark } from '../features/trucks/scene/TruckPark';
 import { Racks } from '../features/warehouse/scene/Racks';
 import { WarehouseBuilding } from '../features/warehouse/scene/WarehouseBuilding';
 import { Workers } from '../features/workers/scene/Worker';
 import { RoutePath } from '../shared/RoutePath';
 import { SelectionBrackets } from '../shared/SelectionBrackets';
 import { TagProjector } from '../shared/tags/TagProjector';
-import { THEME } from '../shared/theme';
 import { useSimStore } from '../store/useSimStore';
 import { CameraRig } from './CameraRig';
 import { SimDriver } from './SimDriver';
-
-const SUN: [number, number, number] = [-80, 110, 30];
 
 export function Scene() {
   return (
@@ -30,36 +34,28 @@ export function Scene() {
       flat
       dpr={[1, 2]}
       orthographic
-      camera={{ position: [-160, 190, 165], zoom: 4.2, near: 1, far: 2000 }}
+      camera={{ position: [-560, 650, 570], zoom: 1.2, near: 1, far: 4000 }}
       onPointerMissed={() => useSimStore.getState().select(null)}
     >
-      <color attach="background" args={[THEME.background]} />
-      <hemisphereLight args={['#c3ccff', '#2a3060', 1.35]} />
-      <directionalLight
-        castShadow
-        position={SUN}
-        color="#eef0ff"
-        intensity={1.35}
-        shadow-mapSize={[4096, 4096]}
-        shadow-camera-left={-120}
-        shadow-camera-right={120}
-        shadow-camera-top={110}
-        shadow-camera-bottom={-110}
-        shadow-camera-far={400}
-        shadow-bias={-0.0005}
-        shadow-normalBias={0.04}
-      />
+      <DayNight />
+
+      {/* Town */}
+      <RoadNetwork />
+      <CityBuildings />
+      <CityCars />
 
       {/* Site */}
       <SiteGround />
       <Markings />
       <Fence />
       <Trees />
-      <CarPark />
+      <CarPark area={ZONES.carParkWest} />
+      <CarPark area={ZONES.carParkEast} />
       <LampPosts />
       <Buildings />
       <Gate />
       <YardProps />
+      <TruckPark />
       <ZoneLabels />
 
       {/* Operations */}
@@ -67,6 +63,7 @@ export function Scene() {
       <Racks />
       <DockArea />
       <ProductionHall />
+      <Conveyor />
       <Agvs />
       <Trucks />
       <Workers />

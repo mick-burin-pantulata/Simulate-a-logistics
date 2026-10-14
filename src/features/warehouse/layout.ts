@@ -82,14 +82,15 @@ export interface DockDef {
   workerHome: V2;
 }
 
-export const DOCKS: DockDef[] = [4, 8, 12, 16, 20].map((c, i) => {
-  const kind: DockKind = i < 2 ? 'receiving' : 'shipping';
+/** Six doors, mirrored about the centre line: receiving R1–R3 west, shipping S1–S3 east. */
+export const DOCKS: DockDef[] = [2, 6, 10, 14, 18, 22].map((c, i) => {
+  const kind: DockKind = i < 3 ? 'receiving' : 'shipping';
   const x = cellToWorld({ c, r: 0 }).x;
   const stage = [c - 1, c, c + 1].map((sc) => ({ c: sc, r: STAGE_ROW }));
   return {
     id: i,
     kind,
-    name: kind === 'receiving' ? `R${i + 1}` : `S${i - 1}`,
+    name: kind === 'receiving' ? `R${i + 1}` : `S${i - 2}`,
     c,
     x,
     stage,
@@ -97,7 +98,8 @@ export const DOCKS: DockDef[] = [4, 8, 12, 16, 20].map((c, i) => {
     stagePos: stage.map(cellToWorld),
     standPos: stage.map((s) => ({ x: cellToWorld(s).x, z: 14.7 })),
     doorPos: { x, z: 15.7 },
-    workerHome: { x: x + 2.7, z: 15.3 },
+    // Workers stand on the outer side of their door, mirrored like the docks.
+    workerHome: { x: x + (x < 0 ? -2.7 : 2.7), z: 15.3 },
   };
 });
 
@@ -106,10 +108,20 @@ export const DOCKS: DockDef[] = [4, 8, 12, 16, 20].map((c, i) => {
 export const MAX_AGVS = 12;
 export const PARKING: Cell[] = Array.from({ length: MAX_AGVS }, (_, i) => ({ c: 6 + i, r: 0 }));
 
+/** Where the production conveyor ends inside the warehouse, and where an AGV stands to unload it. */
+export const CONVEYOR_END: Cell = { c: COLS - 1, r: 0 };
+export const CONVEYOR_ACCESS: Cell = { c: COLS - 1, r: 1 };
+/** Mirror image: where AGVs load raw material onto the conveyor to production. */
+export const RAW_CONVEYOR_START: Cell = { c: 0, r: 0 };
+export const RAW_CONVEYOR_ACCESS: Cell = { c: 0, r: 1 };
+
+const blocked = (c: number, r: number) =>
+  (c === CONVEYOR_END.c && r === CONVEYOR_END.r) || (c === RAW_CONVEYOR_START.c && r === RAW_CONVEYOR_START.r);
+
 export const GRID: GridSpec = {
   cols: COLS,
   rows: ROWS,
-  walkable: (c, r) => r < DRIVE_ROWS && !rackCells.has(`${c},${r}`),
+  walkable: (c, r) => r < DRIVE_ROWS && !rackCells.has(`${c},${r}`) && !blocked(c, r),
 };
 
 export const drivePath = (start: Cell, goal: Cell, blocked?: Set<string>) => findGridPath(GRID, start, goal, blocked);

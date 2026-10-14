@@ -2,9 +2,11 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { Color, DoubleSide, InstancedMesh, Object3D } from 'three';
 import { pick, rand } from '../../../core/math';
 import { chainLinkCanvas, repeatingTexture } from '../../../shared/canvasTexture';
+import { lampHeadMaterial, lightPoolMaterial } from '../../../shared/nightMaterials';
 import { GroundStrip } from '../../../shared/primitives';
 import { THEME } from '../../../shared/theme';
-import { GATE, SITE, ZONES, type Rect } from '../layout';
+import { STAFF_LOTS } from '../../city/layout';
+import { ENTRY_GATE, EXIT_GATE, SITE, ZONES, type Rect } from '../layout';
 
 const FENCE_H = 2.2;
 
@@ -17,8 +19,9 @@ export function Fence() {
       [{ x: minX, z: minZ }, { x: maxX, z: minZ }],
       [{ x: minX, z: minZ }, { x: minX, z: maxZ }],
       [{ x: maxX, z: minZ }, { x: maxX, z: maxZ }],
-      [{ x: minX, z: maxZ }, { x: GATE.minX, z: maxZ }],
-      [{ x: GATE.maxX, z: maxZ }, { x: maxX, z: maxZ }],
+      [{ x: minX, z: maxZ }, { x: ENTRY_GATE.minX, z: maxZ }],
+      [{ x: ENTRY_GATE.maxX, z: maxZ }, { x: EXIT_GATE.minX, z: maxZ }],
+      [{ x: EXIT_GATE.maxX, z: maxZ }, { x: maxX, z: maxZ }],
     ];
   }, []);
 
@@ -122,69 +125,40 @@ export function Trees() {
   );
 }
 
-const CAR_COLORS = ['#f8fafc', '#1f2937', '#9ca3af', '#b91c1c', '#1d4ed8', '#78716c', '#e5e7eb', '#0f766e'];
 
 /** Staff car park with painted bays and parked cars. */
-export function CarPark({ area = ZONES.carPark }: { area?: Rect }) {
-  const bodies = useRef<InstancedMesh>(null);
-  const cabins = useRef<InstancedMesh>(null);
-
-  const { bays, cars } = useMemo(() => {
-    const bays: { x: number; z: number }[] = [];
-    for (const z of [area.minZ + 4, area.minZ + 12, area.maxZ - 12, area.maxZ - 4]) {
-      for (let x = area.minX + 2; x <= area.maxX - 2; x += 2.8) bays.push({ x, z });
-    }
-    const cars = bays.filter(() => Math.random() < 0.7);
-    return { bays, cars };
-  }, [area]);
-
-  useLayoutEffect(() => {
-    const d = new Object3D();
-    const c = new Color();
-    cars.forEach((car, i) => {
-      d.position.set(car.x, 0.55, car.z);
-      d.updateMatrix();
-      bodies.current!.setMatrixAt(i, d.matrix);
-      bodies.current!.setColorAt(i, c.set(pick(CAR_COLORS)));
-      d.position.set(car.x, 1.15, car.z + 0.2);
-      d.updateMatrix();
-      cabins.current!.setMatrixAt(i, d.matrix);
-    });
-    bodies.current!.instanceMatrix.needsUpdate = true;
-    bodies.current!.instanceColor!.needsUpdate = true;
-    cabins.current!.instanceMatrix.needsUpdate = true;
-  }, [cars]);
-
+/** Staff car park surface and bay lines; the parked cars themselves are real (traffic/cars.ts). */
+export function CarPark({ area = ZONES.carParkWest }: { area?: Rect }) {
+  const lot = STAFF_LOTS.find((l) => (area.minX < 0 ? l.side === 'W' : l.side === 'E'))!;
   return (
     <group>
       <mesh position={[(area.minX + area.maxX) / 2, -0.015, (area.minZ + area.maxZ) / 2]} rotation-x={-Math.PI / 2} receiveShadow>
         <planeGeometry args={[area.maxX - area.minX, area.maxZ - area.minZ]} />
         <meshStandardMaterial color={THEME.asphalt} />
       </mesh>
-      {bays.map((b, i) => (
+      {lot.spots.map((b, i) => (
         <GroundStrip key={i} a={{ x: b.x - 1.4, z: b.z - 2.4 }} b={{ x: b.x - 1.4, z: b.z + 2.4 }} width={0.12} color={THEME.paintWhite} y={0.01} />
       ))}
-      <instancedMesh ref={bodies} args={[undefined, undefined, cars.length]} castShadow>
-        <boxGeometry args={[1.8, 0.7, 4.2]} />
-        <meshStandardMaterial metalness={0.4} roughness={0.4} />
-      </instancedMesh>
-      <instancedMesh ref={cabins} args={[undefined, undefined, cars.length]} castShadow>
-        <boxGeometry args={[1.6, 0.55, 2.2]} />
-        <meshStandardMaterial color="#1e293b" metalness={0.6} roughness={0.2} />
-      </instancedMesh>
     </group>
   );
 }
 
-const LAMPS = [
-  { x: -30, z: 30 },
-  { x: -5, z: 52 },
-  { x: 20, z: 30 },
-  { x: 40, z: 52 },
-  { x: 58, z: 30 },
-  { x: -40, z: -18 },
-  { x: 30, z: -18 },
+/** Street lamps, mirrored about the centre line. */
+const LAMP_HALF = [
+  { x: 30, z: 34 },
+  { x: 55, z: 52 },
+  { x: 60, z: 30 },
+  { x: 96, z: 30 },
+  { x: 74, z: 8 },
+  { x: 40, z: 12 },
+  { x: 40, z: -18 },
+  { x: 40, z: -44 },
+  { x: 90, z: -10 },
+  { x: 90, z: -54 },
+  { x: 118, z: 20 },
+  { x: 118, z: -40 },
 ];
+const LAMPS = [...LAMP_HALF, ...LAMP_HALF.map((p) => ({ x: -p.x, z: p.z }))];
 
 export function LampPosts() {
   return (
@@ -195,9 +169,11 @@ export function LampPosts() {
             <cylinderGeometry args={[0.08, 0.12, 7, 8]} />
             <meshStandardMaterial color={THEME.steel} metalness={0.3} />
           </mesh>
-          <mesh position={[0, 7.05, 0]}>
+          <mesh position={[0, 7.05, 0]} material={lampHeadMaterial}>
             <boxGeometry args={[0.9, 0.15, 0.4]} />
-            <meshStandardMaterial color="#fef9c3" emissive="#fde68a" emissiveIntensity={0.8} />
+          </mesh>
+          <mesh rotation-x={-Math.PI / 2} position={[0, 0.06, 0]} material={lightPoolMaterial} renderOrder={1}>
+            <planeGeometry args={[16, 16]} />
           </mesh>
         </group>
       ))}

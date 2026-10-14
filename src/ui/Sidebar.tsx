@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { AgvPanel } from '../features/agv/ui/AgvPanel';
+import { CityPanel } from '../features/city/ui/CityPanel';
 import { DocksPanel } from '../features/docks/ui/DocksPanel';
+import { OrdersPanel } from '../features/orders/ui/OrdersPanel';
 import { TrucksPanel } from '../features/trucks/ui/TrucksPanel';
 import { InventoryPanel } from '../features/warehouse/ui/InventoryPanel';
 import { PeoplePanel } from '../features/workers/ui/PeoplePanel';
@@ -8,14 +10,16 @@ import { Icons } from './icons';
 import { OverviewPanel } from './panels/OverviewPanel';
 import { SettingsPanel } from './panels/SettingsPanel';
 
-type TabId = 'overview' | 'trucks' | 'docks' | 'agv' | 'inventory' | 'people' | 'settings';
+type TabId = 'overview' | 'city' | 'orders' | 'trucks' | 'docks' | 'agv' | 'inventory' | 'people' | 'settings';
 
 const TABS: { id: TabId; label: string; icon: ReactNode; panel: () => ReactNode }[] = [
   { id: 'overview', label: 'ภาพรวม', icon: Icons.overview, panel: () => <OverviewPanel /> },
-  { id: 'trucks', label: 'รถบรรทุก', icon: Icons.truck, panel: () => <TrucksPanel /> },
+  { id: 'city', label: 'เมือง', icon: Icons.city, panel: () => <CityPanel /> },
+  { id: 'orders', label: 'ออเดอร์', icon: Icons.log, panel: () => <OrdersPanel /> },
+  { id: 'trucks', label: 'คิวรถ', icon: Icons.truck, panel: () => <TrucksPanel /> },
   { id: 'docks', label: 'ท่าโหลด', icon: Icons.dock, panel: () => <DocksPanel /> },
   { id: 'agv', label: 'AGV', icon: Icons.agv, panel: () => <AgvPanel /> },
-  { id: 'inventory', label: 'คลังสินค้า', icon: Icons.boxes, panel: () => <InventoryPanel /> },
+  { id: 'inventory', label: 'คลัง/ผลิต', icon: Icons.boxes, panel: () => <InventoryPanel /> },
   { id: 'people', label: 'บุคลากร', icon: Icons.people, panel: () => <PeoplePanel /> },
   { id: 'settings', label: 'ตั้งค่า', icon: Icons.settings, panel: () => <SettingsPanel /> },
 ];

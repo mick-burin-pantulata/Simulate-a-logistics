@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useSimStore } from '../store/useSimStore';
 import type { EventKind } from '../world/types';
-import { clock } from './format';
+import { clockLabel } from '../features/time/clock';
 import { Icons } from './icons';
 
 const KIND_COLOR: Record<EventKind, string> = {
@@ -9,6 +9,8 @@ const KIND_COLOR: Record<EventKind, string> = {
   gate: '#f87171',
   dock: '#4ade80',
   agv: '#7c95ff',
+  order: '#f472b6',
+  staff: '#facc15',
   info: '#94a3b8',
 };
 
@@ -28,7 +30,7 @@ export function EventLog() {
         <ol>
           {events.map((e) => (
             <li key={e.id}>
-              <time>{clock(e.t).slice(0, 5)}</time>
+              <time>{clockLabel(e.t)}</time>
               <i style={{ background: KIND_COLOR[e.kind] }} />
               <span>{e.text}</span>
             </li>

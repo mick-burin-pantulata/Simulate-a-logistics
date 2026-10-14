@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef } from 'react';
 import type { Group } from 'three';
 import { brandTexture } from '../../../shared/canvasTexture';
+import { headlightMaterial } from '../../../shared/nightMaterials';
 import { selectable } from '../../../shared/pointer';
 import { useSimStore } from '../../../store/useSimStore';
 import { AXLE_TO_REAR, CAB_FRONT, HITCH_TO_AXLE, TRAILER_FRONT } from '../routes';
@@ -11,7 +12,7 @@ const TRAILER_MID = (HITCH_TO_AXLE + TRAILER_FRONT - AXLE_TO_REAR) / 2;
 const TRAILER_W = 2.55;
 const TRAILER_H = 2.9;
 const FLOOR_Y = 1.25;
-const MAX_LOAD = 10;
+const MAX_LOAD = 12;
 
 const WHITE = '#eef1fb';
 const NAVY = '#1f2a5c';
@@ -106,6 +107,10 @@ function Tractor({ color }: { color: string }) {
         <cylinderGeometry args={[0.3, 0.3, 1.3, 14]} />
         <meshStandardMaterial color="#b9c0de" metalness={0.7} roughness={0.25} />
       </mesh>
+      {/* Headlight beam on the ground (visible at night) */}
+      <mesh rotation-x={-Math.PI / 2} position={[0, 0.07, CAB_FRONT + 6]} scale={[1, 1.8, 1]} material={headlightMaterial} renderOrder={1}>
+        <planeGeometry args={[6, 6]} />
+      </mesh>
       <Wheel x={-1.05} z={CAB_FRONT - 1} />
       <Wheel x={1.05} z={CAB_FRONT - 1} />
       <Wheel x={-1.05} z={-0.4} />
@@ -134,7 +139,7 @@ function Truck({ id }: { id: number }) {
     cab.current!.rotation.y = t.cab.heading;
     trailer.current!.position.set(t.trailer.x, 0, t.trailer.z);
     trailer.current!.rotation.y = t.trailer.heading;
-    const open = t.phase === 'docked' ? world.docks[t.dockId].door : 0;
+    const open = t.phase === 'docked' && t.dockId !== null ? world.docks[t.dockId].door : 0;
     doorL.current!.rotation.y = open * 1.6;
     doorR.current!.rotation.y = -open * 1.6;
     load.current.forEach((g, i) => g && (g.visible = i < t.cargo));

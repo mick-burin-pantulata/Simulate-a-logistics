@@ -8,6 +8,8 @@ export function Inspector() {
   const item = useSimStore((s) => s.snapshot.selected);
   const select = useSimStore((s) => s.select);
   const focus = useSimStore((s) => s.focus);
+  const following = useSimStore((s) => s.following);
+  const setFollowing = useSimStore((s) => s.setFollowing);
 
   if (!item) {
     return <div className="inspector hint-card">คลิกรถบรรทุก AGV หรือพนักงานในฉากเพื่อดูรายละเอียด</div>;
@@ -22,7 +24,12 @@ export function Inspector() {
           <span className="muted">{item.subtitle}</span>
         </div>
         <div className="inspector-actions">
-          <button className="icon-btn" title="ซูมไปที่" onClick={() => focus({ kind: item.kind, id: item.id })}>
+          <button
+            className={`icon-btn ${following ? 'active' : ''}`}
+            title={following ? 'หยุดติดตาม' : 'ติดตาม (กล้องเลื่อนตาม)'}
+            aria-pressed={following}
+            onClick={() => (following ? setFollowing(false) : focus({ kind: item.kind, id: item.id }))}
+          >
             {Icons.focus}
           </button>
           <button className="icon-btn" title="ปิด" onClick={() => select(null)}>
@@ -31,6 +38,7 @@ export function Inspector() {
         </div>
       </header>
       <Badge {...item.status} />
+      {following && <div className="follow-hint">● กำลังติดตาม — เลื่อนกล้อง (คลิกขวาลาก) เพื่อเลิกติดตาม</div>}
       <dl className="fields">
         {item.fields.map(([k, v]) => (
           <div key={k}>

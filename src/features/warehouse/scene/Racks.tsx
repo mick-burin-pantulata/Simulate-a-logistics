@@ -8,7 +8,11 @@ const RACK_W = 1.8;
 const RACK_D = 1.6;
 const RACK_H = 2.8;
 const BOX = 0.68;
-const BOX_COLORS = ['#8a5a2b', '#9c6a36', '#7c4f25', '#a8743d', '#2f5fb3', '#c9d0f0'];
+const BOX_COLORS = ['#8a5a2b', '#9c6a36', '#7c4f25', '#a8743d'];
+/** Raw material arrives shrink-wrapped in blue; finished goods are brown cartons. */
+const RAW_COLORS = ['#4f74b3', '#5b7fb8', '#46679e'];
+const FINISHED_COLORS = BOX_COLORS;
+const tint = new Color();
 const POSTS = 4;
 const HIDDEN = new Matrix4().makeScale(0, 0, 0);
 
@@ -64,9 +68,14 @@ export function Racks() {
       rack.forEach((slot, s) => {
         const idx = r * SLOTS_PER_RACK + s;
         boxes.current!.setMatrixAt(idx, slot.full ? boxMatrices.current[idx] : HIDDEN);
+        if (slot.full) {
+          const tones = slot.item === 'raw' ? RAW_COLORS : FINISHED_COLORS;
+          boxes.current!.setColorAt(idx, tint.set(tones[(r + s) % tones.length]));
+        }
       }),
     );
     boxes.current!.instanceMatrix.needsUpdate = true;
+    boxes.current!.instanceColor!.needsUpdate = true;
   });
 
   return (

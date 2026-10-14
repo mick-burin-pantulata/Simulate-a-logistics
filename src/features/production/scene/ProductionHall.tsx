@@ -1,11 +1,13 @@
 import { useFrame } from '@react-three/fiber';
 import { useRef } from 'react';
 import { InstancedMesh, MeshStandardMaterial, Object3D } from 'three';
+import { lightPoolMaterial } from '../../../shared/nightMaterials';
 import { Box, GroundRect } from '../../../shared/primitives';
 import { THEME } from '../../../shared/theme';
 import { useSimStore } from '../../../store/useSimStore';
 import { ZONES, rectCenter, rectSize } from '../../site/layout';
 import { LINE_MAX_X, LINE_MIN_X, LINE_Z, MACHINE_X } from '../layout';
+import { Palletizers } from './Palletizer';
 
 const R = ZONES.production;
 const BELT_SPEED = 1.2;
@@ -13,6 +15,8 @@ const BOX_GAP = 3.2;
 const LINE_LEN = LINE_MAX_X - LINE_MIN_X;
 const BOXES_PER_LINE = Math.floor(LINE_LEN / BOX_GAP);
 const WALL_H = 1.4;
+/** West personnel door, north of where the raw-material conveyor ends. */
+const DOOR_Z = -47;
 
 /** Products riding the conveyors; driven by sim time so they pause with the simulation. */
 function ConveyorLoad() {
@@ -79,8 +83,8 @@ export function ProductionHall() {
       <Box position={[cx, WALL_H / 2, R.minZ]} size={[w, WALL_H, 0.3]} color={THEME.wall} />
       <Box position={[cx, WALL_H / 2, R.maxZ]} size={[w, WALL_H, 0.3]} color={THEME.wall} />
       <Box position={[R.maxX, WALL_H / 2, cz]} size={[0.3, WALL_H, d]} color={THEME.wall} />
-      <Box position={[R.minX, WALL_H / 2, (R.minZ + (-36 - 1.5)) / 2]} size={[0.3, WALL_H, -36 - 1.5 - R.minZ]} color={THEME.wall} />
-      <Box position={[R.minX, WALL_H / 2, (R.maxZ + (-36 + 1.5)) / 2]} size={[0.3, WALL_H, R.maxZ - (-36 + 1.5)]} color={THEME.wall} />
+      <Box position={[R.minX, WALL_H / 2, (R.minZ + (DOOR_Z - 1.5)) / 2]} size={[0.3, WALL_H, DOOR_Z - 1.5 - R.minZ]} color={THEME.wall} />
+      <Box position={[R.minX, WALL_H / 2, (R.maxZ + (DOOR_Z + 1.5)) / 2]} size={[0.3, WALL_H, R.maxZ - (DOOR_Z + 1.5)]} color={THEME.wall} />
 
       {/* Steel frame */}
       {[-25, -12.5, 0, 12.5, 25].map((x) => (
@@ -103,13 +107,16 @@ export function ProductionHall() {
       {LINE_Z.flatMap((z, l) => MACHINE_X.map((x, i) => <Machine key={`${l}-${i}`} x={x} z={z - 0.2} i={l * 4 + i} />))}
       <ConveyorLoad />
 
-      {/* Finished-goods pallets at the end of each line */}
-      {LINE_Z.map((z) => (
-        <group key={z} position={[LINE_MAX_X + 1.5, 0, z]}>
-          <Box position={[0, 0.07, 0]} size={[1.1, 0.14, 1.1]} color="#a16207" />
-          <Box position={[0, 0.55, 0]} size={[1, 0.8, 1]} color="#c08a4b" />
-        </group>
-      ))}
+      <Palletizers />
+
+      {/* High-bay lights over both lines (visible at night) */}
+      {[-15, -5, 5, 15].flatMap((x) =>
+        LINE_Z.map((z) => (
+          <mesh key={`${x},${z}`} rotation-x={-Math.PI / 2} position={[x, 0.05, z + 1]} material={lightPoolMaterial} renderOrder={1}>
+            <planeGeometry args={[11, 11]} />
+          </mesh>
+        )),
+      )}
     </group>
   );
 }

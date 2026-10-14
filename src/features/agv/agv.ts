@@ -1,9 +1,15 @@
 import { cellKey, manhattan, sameCell, type Cell } from '../../core/grid';
 import { approach, lerpAngle } from '../../core/math';
 import type { World } from '../../world/types';
-import { reserveFreeSlot, setSlot } from '../warehouse/inventory';
+import { BELT_Y, canInsertRaw, insertRaw, takeHead } from '../conveyor/conveyor';
+import { emptySlot } from '../docks/docks';
+import { reserveFreeSlot, setSlot, type Item } from '../warehouse/inventory';
 import {
   CELL,
+  CONVEYOR_ACCESS,
+  CONVEYOR_END,
+  RAW_CONVEYOR_ACCESS,
+  RAW_CONVEYOR_START,
   DOCKS,
   LEVEL_Y,
   MAX_AGVS,
@@ -16,14 +22,24 @@ import {
 
 export type AgvState = 'idle' | 'toPickup' | 'loading' | 'toDrop' | 'unloading' | 'toPark';
 
-export type Loc = { kind: 'rack'; rack: number; slot: number } | { kind: 'stage'; dock: number; slot: number };
+export type Loc =
+  | { kind: 'rack'; rack: number; slot: number }
+  | { kind: 'stage'; dock: number; slot: number }
+  /** End of the finished-goods conveyor from production (pickup). */
+  | { kind: 'conveyor' }
+  /** Start of the raw-material conveyor to production (drop-off). */
+  | { kind: 'rawConveyor' };
 
 export interface Task {
   id: number;
-  kind: 'putaway' | 'pick';
+  /** putaway = into a rack, pick = rack → shipping dock, feed = raw rack → production line. */
+  kind: 'putaway' | 'pick' | 'feed';
   src: Loc;
   /** Putaway destinations are chosen when an AGV takes the task. */
   dst: Loc | null;
+  item: Item;
+  /** Feed tasks: which production line the pallet is for. */
+  line: number | null;
   status: 'pending' | 'active';
   agvId: number | null;
   createdAt: number;
@@ -63,17 +79,26 @@ const FORK_CARRY = 0.3;
 
 // ---- Locations ---------------------------------------------------------
 
-export const locAccess = (l: Loc): Cell =>
-  l.kind === 'rack' ? RACKS[l.rack].access : DOCKS[l.dock].stageAccess[l.slot];
+export function locAccess(l: Loc): Cell {
+  if (l.kind === 'rack') return RACKS[l.rack].access;
+  if (l.kind === 'stage') return DOCKS[l.dock].stageAccess[l.slot];
+  return l.kind === 'conveyor' ? CONVEYOR_ACCESS : RAW_CONVEYOR_ACCESS;
+}
 
-const locFaceCell = (l: Loc): Cell => (l.kind === 'rack' ? RACKS[l.rack].cell : DOCKS[l.dock].stage[l.slot]);
+function locFaceCell(l: Loc): Cell {
+  if (l.kind === 'rack') return RACKS[l.rack].cell;
+  if (l.kind === 'stage') return DOCKS[l.dock].stage[l.slot];
+  return l.kind === 'conveyor' ? CONVEYOR_END : RAW_CONVEYOR_START;
+}
 
-const locHeight = (l: Loc) => (l.kind === 'rack' ? LEVEL_Y[slotLevel(l.slot)] + 0.05 : FORK_LOW);
+const locHeight = (l: Loc) =>
+  l.kind === 'rack' ? LEVEL_Y[slotLevel(l.slot)] + 0.05 : l.kind === 'stage' ? FORK_LOW : BELT_Y;
 
-export const locLabel = (l: Loc) =>
-  l.kind === 'rack'
-    ? `ชั้น ${RACKS[l.rack].label}-${l.slot + 1}`
-    : `${DOCKS[l.dock].name} ช่องพัก ${l.slot + 1}`;
+export function locLabel(l: Loc) {
+  if (l.kind === 'rack') return `ชั้น ${RACKS[l.rack].label}-${l.slot + 1}`;
+  if (l.kind === 'stage') return `${DOCKS[l.dock].name} ช่องพัก ${l.slot + 1}`;
+  return l.kind === 'conveyor' ? 'สายพานสินค้าจากฝ่ายผลิต' : 'สายพานวัตถุดิบไปฝ่ายผลิต';
+}
 
 // ---- Fleet -------------------------------------------------------------
 
@@ -137,8 +162,8 @@ export function removeAgv(w: World) {
   }
 }
 
-export function createTask(w: World, kind: Task['kind'], src: Loc, dst: Loc | null) {
-  w.tasks.push({ id: w.nextTaskId++, kind, src, dst, status: 'pending', agvId: null, createdAt: w.time });
+export function createTask(w: World, kind: Task['kind'], src: Loc, dst: Loc | null, item: Item, line: number | null = null) {
+  w.tasks.push({ id: w.nextTaskId++, kind, src, dst, item, line, status: 'pending', agvId: null, createdAt: w.time });
 }
 
 // ---- Behaviour ---------------------------------------------------------
@@ -208,16 +233,19 @@ function tryStep(w: World, v: Agv, dt: number) {
 function completePickup(w: World, task: Task) {
   const src = task.src;
   if (src.kind === 'rack') setSlot(w.inventory, src, false);
-  else w.docks[src.dock].stage[src.slot] = { full: false, reserved: false };
+  else if (src.kind === 'stage') w.docks[src.dock].stage[src.slot] = emptySlot();
+  else takeHead(w.conveyor);
 }
 
 function completeDrop(w: World, task: Task) {
   const dst = task.dst!;
   if (dst.kind === 'rack') {
-    setSlot(w.inventory, dst, true);
-  } else {
+    setSlot(w.inventory, dst, true, task.item);
+  } else if (dst.kind === 'rawConveyor') {
+    insertRaw(w.rawConveyor, task.line ?? 0);
+  } else if (dst.kind === 'stage') {
     const dock = w.docks[dst.dock];
-    dock.stage[dst.slot] = { full: true, reserved: false };
+    dock.stage[dst.slot] = { ...emptySlot(), full: true, checked: true };
     dock.requested = Math.max(0, dock.requested - 1);
   }
 }
@@ -251,6 +279,8 @@ function handle(w: World, v: Agv, task: Task | undefined, dt: number) {
   if (Math.abs(v.forkY - target) > 1e-3) return; // still raising/lowering forks
   v.timer -= dt;
   if (v.timer > 0) return;
+  // Wait for room at the head of the raw-material conveyor before setting the pallet down.
+  if (v.state === 'unloading' && loc?.kind === 'rawConveyor' && !canInsertRaw(w.rawConveyor)) return;
 
   if (!task) {
     v.state = 'idle';

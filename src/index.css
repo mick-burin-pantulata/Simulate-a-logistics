@@ -198,6 +198,15 @@ h3 {
 .icon-btn:hover {
   background: rgba(148, 163, 184, 0.2);
 }
+.icon-btn.active {
+  background: var(--accent-strong);
+  border-color: transparent;
+}
+.follow-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #7dd3fc;
+}
 .icon-btn.primary {
   background: var(--accent-strong);
   border-color: transparent;
@@ -812,4 +821,158 @@ input[type='range'] {
   .segmented button:nth-child(5) {
     display: none;
   }
+}
+
+/* ---------- Workflow additions ---------- */
+
+.clock {
+  gap: 10px;
+}
+.clock-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.clock-text b {
+  font-size: 16px;
+}
+.clock-text span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.shift-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, rgba(124, 149, 255, 0.18), rgba(124, 149, 255, 0.04));
+}
+.shift-card b {
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+}
+.shift-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  font-size: 12px;
+}
+.shift-meta .badge {
+  margin: 0;
+}
+
+.bay-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.bay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border-radius: 8px;
+  border: 1px dashed var(--line-strong);
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+.bay b {
+  color: var(--text);
+}
+.bay.busy {
+  border-style: solid;
+  border-color: rgba(249, 115, 22, 0.6);
+  background: rgba(249, 115, 22, 0.12);
+  color: #fed7aa;
+}
+
+.segmented.wide {
+  width: 100%;
+}
+.segmented.wide button {
+  flex: 1;
+  padding: 7px 8px;
+}
+
+.shipment {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(148, 163, 184, 0.05);
+}
+.shipment header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.shipment header .badge {
+  margin: 0;
+}
+.shipment.closed {
+  opacity: 0.6;
+}
+
+.row.dim {
+  opacity: 0.55;
+}
+.line-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bay.busy.out {
+  border-color: rgba(244, 114, 182, 0.6);
+  background: rgba(244, 114, 182, 0.12);
+  color: #fbcfe8;
+}
+
+/* ---------- Town ---------- */
+
+.chain {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.chain i {
+  align-self: center;
+  color: var(--muted);
+  font-style: normal;
+}
+.chain-step {
+  flex: 1;
+  min-width: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(124, 149, 255, 0.08);
+  text-align: center;
+  font-size: 11px;
+}
+.chain-step b {
+  font-size: 11.5px;
+}
+.chain-step span {
+  color: var(--muted);
+}
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 2px;
 }

@@ -4,7 +4,7 @@ import { BufferGeometry, CanvasTexture, Color, Float32BufferAttribute, Group, In
 import { pick, rand } from '../../../core/math';
 import { FONT } from '../../../shared/canvasTexture';
 import { THEME } from '../../../shared/theme';
-import { ROAD, SITE } from '../layout';
+
 
 type Vec3 = [number, number, number];
 
@@ -194,22 +194,26 @@ function Billboard({ x, z }: { x: number; z: number }) {
   );
 }
 
+/** Pallet stacks and roll-cage lines along the south edge of the yard, mirrored about x = 0. */
 const STACK_CLUSTERS = [
-  { x: -39, z: 51.5 },
-  { x: -10, z: 52 },
-  { x: 2, z: 52 },
+  { x: -63, z: 51.5 },
+  { x: -33, z: 51.5 },
   { x: 30, z: 51.5 },
+  { x: 60, z: 51.5 },
 ];
 
 export function YardProps() {
   return (
     <group>
       <PalletStacks clusters={STACK_CLUSTERS} />
-      <RollCages origin={{ x: -28, z: 51.6 }} cols={8} rows={3} />
-      <MapPin x={-37.5} z={52.5} />
-      <MapPin x={3.5} z={53} phase={1.5} />
-      <MapPin x={31.5} z={52.5} phase={3} />
-      <Billboard x={-58} z={(SITE.maxZ + ROAD.minZ) / 2 + 0.3} />
+      <RollCages origin={{ x: -50, z: 51.6 }} cols={6} rows={3} />
+      <RollCages origin={{ x: 44.75, z: 51.6 }} cols={6} rows={3} />
+      <MapPin x={-61.5} z={52.5} />
+      <MapPin x={-31.5} z={53} phase={1.5} />
+      <MapPin x={31.5} z={53} phase={3} />
+      <MapPin x={61.5} z={52.5} phase={4.5} />
+      <Billboard x={-16} z={250} />
+      <Billboard x={16} z={420} />
     </group>
   );
 }

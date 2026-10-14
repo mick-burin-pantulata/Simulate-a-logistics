@@ -1,5 +1,6 @@
 import { Grid } from '@react-three/drei';
 import { Box, GroundRect, GroundStrip } from '../../../shared/primitives';
+import { lightPoolMaterial, windowMaterial } from '../../../shared/nightMaterials';
 import { THEME } from '../../../shared/theme';
 import { ZONES } from '../../site/layout';
 import { CELL, DOCKS, PARKING, cellToWorld } from '../layout';
@@ -47,7 +48,7 @@ function TallWall({ from, to }: { from: { x: number; z: number }; to: { x: numbe
   return (
     <group position={[(from.x + to.x) / 2, 0, (from.z + to.z) / 2]} rotation-y={angle}>
       <Box position={[0, TALL_H / 2, 0]} size={[len, TALL_H, WALL_T]} color={WALL_COLOR} />
-      <Box position={[0, TALL_H - 1.2, 0]} size={[len - 1, 0.9, WALL_T + 0.06]} color={THEME.window} emissive="#f3d9a0" emissiveIntensity={0.5} shadow={false} />
+      <Box position={[0, TALL_H - 1.2, 0]} size={[len - 1, 0.9, WALL_T + 0.06]} color={THEME.window} material={windowMaterial} shadow={false} />
       <Box position={[0, TALL_H + 0.1, 0]} size={[len + 0.3, 0.25, WALL_T + 0.2]} color={THEME.roofTrim} />
       {Array.from({ length: Math.floor(len / 5) }, (_, i) => (
         <Box key={i} position={[-len / 2 + 2.5 + i * 5, TALL_H / 2, 0.2]} size={[0.25, TALL_H, 0.12]} color={THEME.wallLight} shadow={false} />
@@ -113,11 +114,27 @@ export function WarehouseBuilding() {
       })}
 
       {/* Back (north) and east walls are full height; the camera-facing ones stay low. */}
-      <TallWall from={{ x: B.minX, z: B.minZ }} to={{ x: B.maxX, z: B.minZ }} />
-      <TallWall from={{ x: B.maxX, z: B.minZ }} to={{ x: B.maxX, z: B.maxZ }} />
+      {/* North wall stops short of the corner to let the production conveyor in. */}
+      {/* Openings at both ends for the raw-material (west) and finished-goods (east) conveyors */}
+      <TallWall from={{ x: B.minX + 2.2, z: B.minZ }} to={{ x: B.maxX - 2.2, z: B.minZ }} />
+      <Box position={[B.maxX - 1.1, TALL_H - 1.3, B.minZ]} size={[2.2, 2.6, WALL_T]} color={WALL_COLOR} />
+      <Box position={[B.minX + 1.1, TALL_H - 1.3, B.minZ]} size={[2.2, 2.6, WALL_T]} color={WALL_COLOR} />
+      {/* East wall with a personnel door (mirror of the west door) */}
+      <TallWall from={{ x: B.maxX, z: B.minZ }} to={{ x: B.maxX, z: -1.5 }} />
+      <TallWall from={{ x: B.maxX, z: 1.5 }} to={{ x: B.maxX, z: B.maxZ }} />
+      <Box position={[B.maxX, TALL_H - 1.6, 0]} size={[WALL_T, 3.2, 3]} color={WALL_COLOR} />
       <WallX z={B.maxZ} gaps={DOCKS.map((d) => d.x)} />
       <WallZ x={B.minX} gapZ={0} />
       <Frame />
+
+      {/* High-bay light fittings: pools of light on the floor at night */}
+      {[-17, -6, 6, 17].flatMap((x) =>
+        [-9, 1, 10].map((z) => (
+          <mesh key={`${x},${z}`} rotation-x={-Math.PI / 2} position={[x, 0.05, z]} material={lightPoolMaterial} renderOrder={1}>
+            <planeGeometry args={[11, 11]} />
+          </mesh>
+        )),
+      )}
     </group>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { Material } from 'three';
 import type { V2 } from '../core/math';
 
 type Vec3 = [number, number, number];
@@ -14,6 +15,8 @@ interface BoxProps {
   opacity?: number;
   roughness?: number;
   metalness?: number;
+  /** Shared material (e.g. night-lit windows); overrides the colour props. */
+  material?: Material;
   children?: ReactNode;
 }
 
@@ -28,7 +31,15 @@ export function Box({
   opacity,
   roughness = 0.8,
   metalness = 0,
+  material,
 }: BoxProps) {
+  if (material) {
+    return (
+      <mesh position={position} rotation-y={rotationY} castShadow={shadow} receiveShadow={shadow} material={material}>
+        <boxGeometry args={size} />
+      </mesh>
+    );
+  }
   return (
     <mesh position={position} rotation-y={rotationY} castShadow={shadow} receiveShadow={shadow}>
       <boxGeometry args={size} />

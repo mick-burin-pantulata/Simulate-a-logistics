@@ -27,6 +27,14 @@ export const Icons = {
       <rect x="3" y="16" width="7" height="5" rx="1.5" />
     </Icon>
   ),
+  city: (
+    <Icon>
+      <path d="M3 21h18" />
+      <path d="M5 21V9l5-3v15" />
+      <path d="M10 21V4l9 4v13" />
+      <path d="M13 10h3M13 14h3M13 18h3" />
+    </Icon>
+  ),
   truck: (
     <Icon>
       <path d="M2 6h11v10H2z" />
